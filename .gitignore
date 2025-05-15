@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+venv/
+.env*
+
+# Flutter
+build/
+.dart_tool/
+.pub-cache/
+.flutter-*
+
+# YOLO
+*.pt
+runs/
+exp*/
+yolov5/runs/
+
+# IDE & System
+.vscode/
+.idea/
+.DS_Store
