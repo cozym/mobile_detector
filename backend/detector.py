@@ -1,9 +1,17 @@
 from ultralytics import YOLO
 import cv2
 
-model = YOLO("./models/yolov8n.pt")  # COCO 기반 사전학습 모델
+# 두 모델을 미리 로딩
+model_general = YOLO("models/yolov8n.pt")   # 일반 사전학습 COCO 모델
+model_custom = YOLO("models/bestv1.pt")     # 사용자 정의 모델
+
+# 커스텀 모델로 처리할 객체 목록
+custom_objects = {"wallet", "charger", "wristwatch"}
 
 def detect_frame(image, target):
+    # 사용할 모델 선택
+    model = model_custom if target.lower() in custom_objects else model_general
+
     results = model.predict(source=image, conf=0.3, verbose=False)
 
     for r in results:
