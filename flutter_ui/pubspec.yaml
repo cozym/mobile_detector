@@ -1,0 +1,18 @@
+name: moblie_detector2
+description: A new Flutter project
+
+# Ensure the environment section is properly configured
+environment:
+  sdk: ">=3.7.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  window_size: ^0.1.0
+  web_socket_channel: ^2.4.0
+  http: ^1.2.0
+  image_picker: ^1.0.7
+
+# Other settings can remain the same
+flutter:
+  uses-material-design: true
