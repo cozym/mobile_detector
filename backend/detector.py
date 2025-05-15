@@ -1,7 +1,7 @@
 from ultralytics import YOLO
 import cv2
 
-model = YOLO("best.pt")  # COCO 기반 사전학습 모델
+model = YOLO("./models/yolov8n.pt")  # COCO 기반 사전학습 모델
 
 def detect_frame(image, target):
     results = model.predict(source=image, conf=0.3, verbose=False)

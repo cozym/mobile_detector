@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:typed_data';
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
@@ -14,9 +15,12 @@ class CameraPage extends StatefulWidget {
 class _CameraPageState extends State<CameraPage> {
   WebSocketChannel? channel;
   Uint8List? frameBytes;
-  String objectName = "person";
+  final TextEditingController _controller = TextEditingController();
 
   void startStreaming() {
+    final objectName = _controller.text.trim();
+    if (objectName.isEmpty) return;
+
     final uri = Uri.parse("ws://localhost:8000/ws/$objectName");
     channel = WebSocketChannel.connect(uri);
 
@@ -30,88 +34,106 @@ class _CameraPageState extends State<CameraPage> {
   @override
   void dispose() {
     channel?.sink.close();
+    _controller.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBodyBehindAppBar: true,
       backgroundColor: Colors.black,
       appBar: AppBar(
-        title: const Text("Mobile Detector"),
-        centerTitle: true,
-        backgroundColor: Colors.grey[900],
-        foregroundColor: Colors.white,
-        elevation: 2,
-      ),
-      body: Center(
-        child: Container(
-          width: 400, // 모바일 화면 크기
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              TextField(
-                style: const TextStyle(color: Colors.white),
-                cursorColor: Colors.tealAccent,
-                decoration: InputDecoration(
-                  labelText: "탐지할 객체 (예: cup, person)",
-                  labelStyle: const TextStyle(color: Colors.white70),
-                  filled: true,
-                  fillColor: Colors.grey[850],
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                onChanged: (val) => objectName = val,
-              ),
-              const SizedBox(height: 12),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.tealAccent[700],
-                  minimumSize: const Size.fromHeight(45),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-                onPressed: startStreaming,
-                child: const Text("스트리밍 시작", style: TextStyle(color: Colors.white)),
-              ),
-              const SizedBox(height: 16),
-              Expanded(
-                child: Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[900],
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: frameBytes != null
-                      ? ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: Image.memory(frameBytes!, gaplessPlayback: true),
-                        )
-                      : const Center(
-                          child: Text(
-                            "영상 없음",
-                            style: TextStyle(color: Colors.white54),
-                          ),
-                        ),
-                ),
-              ),
-            ],
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.info_outline, color: Colors.white),
+            onPressed: () {},
           ),
-        ),
+          Stack(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.notifications_none, color: Colors.white),
+                onPressed: () {},
+              ),
+              Positioned(
+                right: 8,
+                top: 8,
+                child: Container(
+                  width: 8,
+                  height: 8,
+                  decoration: const BoxDecoration(
+                    color: Colors.redAccent,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              )
+            ],
+          )
+        ],
       ),
-      bottomNavigationBar: BottomAppBar(
-        color: Colors.grey[900],
-        height: 60,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: const [
-            Icon(Icons.home, color: Colors.white38),
-            Icon(Icons.camera_alt, color: Colors.white38),
-            Icon(Icons.settings, color: Colors.white38),
-          ],
-        ),
+      body: Stack(
+        children: [
+          // 실시간 영상 배경
+          Positioned.fill(
+            child: frameBytes != null
+                ? Image.memory(frameBytes!, fit: BoxFit.cover, gaplessPlayback: true)
+                : Container(color: Colors.black),
+          ),
+
+          // 블러 처리된 하단 패널
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: ClipRRect(
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 30),
+                  width: double.infinity,
+                  color: Colors.black.withOpacity(0.4),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      TextField(
+                        controller: _controller,
+                        style: const TextStyle(color: Colors.white),
+                        cursorColor: Colors.tealAccent,
+                        decoration: InputDecoration(
+                          hintText: "탐지할 객체를 입력하세요 (예: person, cup)",
+                          hintStyle: const TextStyle(color: Colors.white60),
+                          filled: true,
+                          fillColor: Colors.white10,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 48,
+                        child: ElevatedButton(
+                          onPressed: startStreaming,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.tealAccent[700],
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          child: const Text("Detection", style: TextStyle(color: Colors.white)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
